@@ -45,6 +45,17 @@ Backend will listen on http://localhost:4000 by default.
 
 See .env.example for a template.
 
+## Integration
+
+- The frontend expects to call this backend at REACT_APP_API_BASE from the browser.
+- With defaults:
+  - Backend base: http://localhost:4000 with API at /api
+  - Frontend origin: http://localhost:3000
+- Ensure CORS allows the frontend by setting FRONTEND_URL=http://localhost:3000.
+- In the frontend, set REACT_APP_API_BASE=http://localhost:4000/api.
+
+See ../../simple-run.md for a quick guide to run both services together.
+
 ## Notes
 
 - Data is not persisted. Restarting the server resets todos.
