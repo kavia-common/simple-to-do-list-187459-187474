@@ -28,6 +28,10 @@ const server = setupServer(
   }),
   rest.delete(`${API}/todos/:id`, (_req, res, ctx) => {
     return res(ctx.json({ ok: true }));
+  }),
+  // Add an error simulation for add with non-JSON body to ensure robust parsing
+  rest.post(`${API}/todos?error=plain`, async (_req, res, ctx) => {
+    return res(ctx.status(400), ctx.text('Bad Request: Title is required'));
   })
 );
 
@@ -89,4 +93,31 @@ test('edit a task inline and save', async () => {
   fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
   await screen.findByText(/First task \(edited\)/i);
+});
+
+test('handles add error with non-JSON body gracefully', async () => {
+  // Override handler for this test to simulate plain-text error response
+  server.use(
+    rest.post(`${API}/todos`, (_req, res, ctx) => {
+      return res(ctx.status(400), ctx.text('Bad Request: Title is required'));
+    })
+  );
+
+  render(<App />);
+
+  // Ensure initial load
+  expect(await screen.findByText(/First task/i)).toBeInTheDocument();
+
+  const input = screen.getByLabelText(/Task title/i);
+  fireEvent.change(input, { target: { value: ' ' } }); // will be trimmed to empty and guarded
+  fireEvent.click(screen.getByRole('button', { name: /add task/i }));
+
+  // Because empty input is guarded, try with a non-empty title but backend still errors
+  fireEvent.change(input, { target: { value: 'New Task' } });
+  fireEvent.click(screen.getByRole('button', { name: /add task/i }));
+
+  // UI should render an error alert without crashing
+  await waitFor(() => {
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
 });

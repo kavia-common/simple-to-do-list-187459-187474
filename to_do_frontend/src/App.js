@@ -76,7 +76,7 @@ function App() {
 
         {error && (
           <div role="alert" style={{ color: 'var(--error)', marginBottom: 8, fontSize: 13 }}>
-            {error?.message || 'Something went wrong'}
+            {error?.message || (typeof error === 'string' ? error : error?.data?.raw) || 'Something went wrong'}
           </div>
         )}
 
