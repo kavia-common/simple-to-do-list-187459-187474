@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import App from './App';
 import { setupServer } from 'msw/node';
 import { rest } from 'msw';
@@ -16,18 +16,17 @@ const server = setupServer(
   rest.get(`${API}/todos`, (_req, res, ctx) => res(ctx.json(fixtures.todos))),
   rest.post(`${API}/todos`, async (req, res, ctx) => {
     const body = await req.json();
-    return res(
-      ctx.json({ id: '3', title: body.title, completed: false })
-    );
+    return res(ctx.json({ id: '3', title: body.title, completed: false }));
   }),
   rest.put(`${API}/todos/:id`, async (req, res, ctx) => {
     const id = req.params.id;
     const body = await req.json();
     const t =
-      fixtures.todos.find((x) => x.id === id) || { id, title: body.title || 'X', completed: !!body.completed };
+      fixtures.todos.find((x) => x.id === id) ||
+      { id, title: body.title || 'X', completed: !!body.completed };
     return res(ctx.json({ ...t, ...body }));
   }),
-  rest.delete(`${API}/todos/:id`, (req, res, ctx) => {
+  rest.delete(`${API}/todos/:id`, (_req, res, ctx) => {
     return res(ctx.json({ ok: true }));
   })
 );
@@ -49,7 +48,9 @@ test('displays list and stats, allows adding a new task', async () => {
   fireEvent.click(screen.getByRole('button', { name: /add task/i }));
 
   // Optimistic add then replacement from server
-  await screen.findByText(/New Task/i);
+  // Be explicit by querying within the tasks list
+  const list = screen.getByRole('list', { name: /tasks list/i });
+  await within(list).findByText(/^New Task$/);
 
   // Stats displayed
   await waitFor(() => {
@@ -81,8 +82,9 @@ test('edit a task inline and save', async () => {
   const editBtn = first.closest('li').querySelector('button[aria-label^="Edit"]');
   fireEvent.click(editBtn);
 
-  const editField = screen.getByLabelText(/Edit Task/i);
-  fireEvent.change(editField, { target: { value: 'First task (edited)' } });
+  // Use a role-based selector for the edit textbox inside the Edit task form
+  const editTextbox = screen.getByRole('textbox', { name: /edit task/i });
+  fireEvent.change(editTextbox, { target: { value: 'First task (edited)' } });
 
   fireEvent.click(screen.getByRole('button', { name: /save/i }));
 
