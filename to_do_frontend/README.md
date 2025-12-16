@@ -21,18 +21,25 @@ A simple and user-friendly To Do app built with React. Users can add, edit, dele
 ## Environment
 
 Important variables (see .env.example):
-- REACT_APP_API_BASE: Base URL for backend API (used by API client). For local dev: http://localhost:4000/api
-- REACT_APP_BACKEND_URL: Fallback base URL for API (optional)
-- Other optional variables used for consistency across environments
+- REACT_APP_API_BASE: Base URL for backend API (used by src/api/todos.js). For local dev: http://localhost:4000/api
+- REACT_APP_BACKEND_URL: Optional fallback if REACT_APP_API_BASE is not set
+
+Other optional variables are provided in .env.example for consistency across environments, but are not used by the current code.
 
 ## Integration
 
-- This frontend expects a backend available at REACT_APP_API_BASE.
+- This frontend expects a backend at REACT_APP_API_BASE.
 - When running the included Express backend locally with defaults:
-  - Backend: http://localhost:4000 with API at /api
+  - Backend: http://localhost:4000 (API under /api)
   - Frontend: http://localhost:3000
 - Set REACT_APP_API_BASE=http://localhost:4000/api in your .env to connect.
 - The backend must allow CORS from FRONTEND_URL (http://localhost:3000 by default).
+- Endpoints called by this app:
+  - GET    {REACT_APP_API_BASE}/todos
+  - POST   {REACT_APP_API_BASE}/todos  body: { "title": "string" }
+  - PUT    {REACT_APP_API_BASE}/todos/:id  body: { "title"?: "string", "completed"?: boolean }
+  - DELETE {REACT_APP_API_BASE}/todos/:id
+  - PATCH  {REACT_APP_API_BASE}/todos/:id/toggle (supported by backend)
 
 See ../../simple-run.md for a quick guide to run both services together.
 
@@ -48,11 +55,3 @@ See ../../simple-run.md for a quick guide to run both services together.
 
 - Proper labels, aria-live regions, and keyboard-friendly forms
 - Inline editing supports submit/cancel with buttons and Enter key
-
-## Notes
-
-- Backend is expected to expose REST endpoints under /api/todos:
-  GET /todos
-  POST /todos body: { title }
-  PUT /todos/:id body: { title?, completed? }
-  DELETE /todos/:id
