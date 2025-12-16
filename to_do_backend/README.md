@@ -5,16 +5,80 @@ A minimal Express API with an in-memory store for a Simple To Do app. Provides C
 ## Features
 
 - In-memory storage for todos (resets on restart)
-- REST API:
+- REST API under /api:
   - GET    /api/todos
-  - POST   /api/todos           body: { title }
-  - PUT    /api/todos/:id       body: { title?, completed? }
+  - POST   /api/todos
+  - PUT    /api/todos/:id
   - PATCH  /api/todos/:id/toggle
   - DELETE /api/todos/:id
 - CORS allowed origin via FRONTEND_URL (default http://localhost:3000)
 - Health endpoint GET /health -> { "status": "ok" }
 - JSON error responses for 404 and generic errors
 - Env config via .env with sane defaults
+
+## Endpoints and Payloads
+
+Base URL: http://localhost:4000 (configurable via PORT)  
+API Base Path: /api
+
+1) GET /api/todos
+- Summary: List all todos.
+- Response 200: [
+  { "id": "string", "title": "string", "completed": boolean, "createdAt": number, "updatedAt": number }
+]
+
+2) POST /api/todos
+- Summary: Create a new todo.
+- Request body (JSON): { "title": "string" }
+- Responses:
+  - 201: { "id": "string", "title": "string", "completed": false, "createdAt": number, "updatedAt": number }
+  - 400: { "error": "Bad Request", "message": "Title is required" }
+
+3) PUT /api/todos/:id
+- Summary: Update title and/or completed state.
+- Request body (JSON): { "title"?: "string", "completed"?: boolean }
+- Responses:
+  - 200: { "id": "string", "title": "string", "completed": boolean, "createdAt": number, "updatedAt": number }
+  - 400: { "error": "Bad Request", "message": "Title cannot be empty" }
+  - 404: { "error": "Not Found", "message": "Todo :id not found" }
+
+4) PATCH /api/todos/:id/toggle
+- Summary: Toggle the completed state of a todo.
+- Responses:
+  - 200: { "id": "string", "title": "string", "completed": boolean, "createdAt": number, "updatedAt": number }
+  - 404: { "error": "Not Found", "message": "Todo :id not found" }
+
+5) DELETE /api/todos/:id
+- Summary: Delete a todo by id.
+- Responses:
+  - 200: { "ok": true }
+  - 404: { "error": "Not Found", "message": "Todo :id not found" }
+
+6) GET /health (or custom path via HEALTHCHECK_PATH)
+- Summary: Healthcheck endpoint.
+- Response 200: { "status": "ok" }
+
+## CORS and Integration
+
+- CORS allowed origin is controlled by FRONTEND_URL. It must match the browser origin of the frontend.
+  - Default FRONTEND_URL: http://localhost:3000
+- The included React frontend uses REACT_APP_API_BASE to construct requests:
+  - For local development set REACT_APP_API_BASE=http://localhost:4000/api
+- With defaults:
+  - Backend listens on PORT=4000
+  - API base path is /api
+  - Frontend runs at http://localhost:3000
+
+Quick integration steps with the included frontend:
+1) Backend .env:
+   - PORT=4000
+   - FRONTEND_URL=http://localhost:3000
+   - HEALTHCHECK_PATH=/health
+2) Frontend .env:
+   - REACT_APP_API_BASE=http://localhost:4000/api
+3) Start backend then frontend. Requests will be sent to:
+   - GET/POST/PUT/DELETE: {REACT_APP_API_BASE}/todos
+   - Toggle (if used directly): {REACT_APP_API_BASE}/todos/:id/toggle
 
 ## Quick Start
 
@@ -45,24 +109,12 @@ Backend will listen on http://localhost:4000 by default.
 
 See .env.example for a template.
 
-## Integration
-
-- The frontend expects to call this backend at REACT_APP_API_BASE from the browser.
-- With defaults:
-  - Backend base: http://localhost:4000 with API at /api
-  - Frontend origin: http://localhost:3000
-- Ensure CORS allows the frontend by setting FRONTEND_URL=http://localhost:3000.
-- In the frontend, set REACT_APP_API_BASE=http://localhost:4000/api.
-
-See ../../simple-run.md for a quick guide to run both services together.
-
 ## Notes
 
 - Data is not persisted. Restarting the server resets todos.
-- Aligns with the frontend client which calls:
-  - GET {API_BASE}/todos
-  - POST {API_BASE}/todos
-  - PUT {API_BASE}/todos/:id
-  - DELETE {API_BASE}/todos/:id
-
-Set REACT_APP_API_BASE (frontend) to http://localhost:4000/api for local development.
+- Frontend client calls:
+  - GET {REACT_APP_API_BASE}/todos
+  - POST {REACT_APP_API_BASE}/todos
+  - PUT {REACT_APP_API_BASE}/todos/:id
+  - DELETE {REACT_APP_API_BASE}/todos/:id
+  - PATCH {REACT_APP_API_BASE}/todos/:id/toggle (supported by backend)
